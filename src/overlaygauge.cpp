@@ -103,7 +103,7 @@ OverlayGauge::OverlayGauge(int left2d, int top2d, int width2d, int height2d, int
     generateTex((int*)(&gauge_texture_), 1);
     bindTex(gauge_texture_, 0);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width_3d_, height_3d_, 0,
-                 GL_RGBA, GL_UNSIGNED_BYTE, 0);
+                 GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
     glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
@@ -179,7 +179,7 @@ void OverlayGauge::setVisible(bool b)
 {
     if (!b)
     {
-        XPLMTakeKeyboardFocus(0);
+        XPLMTakeKeyboardFocus(nullptr);
         window_has_keyboard_focus_ = false;
     }
     visible_2d_ = b;
@@ -198,6 +198,7 @@ bool OverlayGauge::isVisible() const
 
 void OverlayGauge::frame()
 {
+    update();
     visible_2d_ = XPLMGetWindowIsVisible(window2d_id_);
     if (!wantVRifAvailable())
         return;
@@ -249,7 +250,7 @@ void OverlayGauge::toggleKeyboardFocus()
 {
     if (window_has_keyboard_focus_)
     {
-        XPLMTakeKeyboardFocus(0);
+        XPLMTakeKeyboardFocus(nullptr);
         window_has_keyboard_focus_ = false;
     }
     else
@@ -267,6 +268,10 @@ float OverlayGauge::instrumentBrightness() const
 bool OverlayGauge::wantVRifAvailable() const
 {
     return true;
+}
+
+void OverlayGauge::update()
+{
 }
 
 void OverlayGauge::draw2dWindowCallback(XPLMWindowID)
@@ -319,7 +324,7 @@ void OverlayGauge::draw2dWindowCallback(XPLMWindowID)
         {
             static float color[] = { 1.f, 0.5f, 0.f};
             static char str[] = "K";
-            XPLMDrawString(color, left + 20, top - 25, str, 0, xplmFont_Proportional);
+            XPLMDrawString(color, left + 20, top - 25, str, nullptr, xplmFont_Proportional);
         }
     }
 }
@@ -406,26 +411,26 @@ int OverlayGauge::handle2dClickCallback(XPLMWindowID window_id, int x, int y, XP
             /// Test for the mouse in the window
             if (vr_enabled_ == 0)
             {
-            if (coordInRect(x, y, Left, Top, Left+40, Top-40))
-            {
-                XPLMTakeKeyboardFocus(0);
-                window_has_keyboard_focus_ = false;
-                setVisible(false);
-            }
-            else if (coordInRect(x, y, Right-40, Top, Right, Top-40))
-            {
-                XPLMSetWindowPositioningMode(window2d_id_, xplm_WindowPopOut, -1);
-            }
-            else if (!handleNonDragClick(x_rel, y_rel, false))
-            {
-                dX = x - Left;
-                dY = y - Top;
-                window_is_dragging_ = true;
-            }
+                if (coordInRect(x, y, Left, Top, Left+40, Top-40))
+                {
+                    XPLMTakeKeyboardFocus(nullptr);
+                    window_has_keyboard_focus_ = false;
+                    setVisible(false);
+                }
+                else if (coordInRect(x, y, Right-40, Top, Right, Top-40))
+                {
+                    XPLMSetWindowPositioningMode(window2d_id_, xplm_WindowPopOut, -1);
+                }
+                else if (!handleNonDragClick(x_rel, y_rel, false))
+                {
+                    dX = x - Left;
+                    dY = y - Top;
+                    window_is_dragging_ = true;
+                }
             }
             else
             {
-                return handleNonDragClick(x_rel, y_rel, false);
+                handleNonDragClick(x_rel, y_rel, false);
             }
             break;
         case xplm_MouseDrag:

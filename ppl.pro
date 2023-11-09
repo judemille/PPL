@@ -9,8 +9,8 @@ CONFIG -= thread qt
 VERSION = 2.0.0
 
 INCLUDEPATH += include/simpleini
-INCLUDEPATH += ../SDK/CHeaders/XPLM
-INCLUDEPATH += ../SDK/CHeaders/Widgets
+INCLUDEPATH += include/SDK/CHeaders/XPLM
+INCLUDEPATH += include/SDK/CHeaders/Widgets
 
 # Defined to use X-Plane SDK 2.0, 2.1, 3.0 and 3.01 capabilities - no backward compatibility before 11.20
 DEFINES += XPLM200 XPLM210 XPLM300 XPLM301
@@ -18,11 +18,6 @@ DEFINES += XPLM200 XPLM210 XPLM300 XPLM301
 OBJECTS_DIR  = objects
 DESTDIR = lib
 TARGET = ppl
-
-standalone {
-    DEFINES += BUILD_FOR_STANDALONE
-    TARGET = pplstandalone
-}
 
 macx {
     DEFINES += APL=1 IBM=0 LIN=0
@@ -40,7 +35,7 @@ win32 {
     DEFINES += APL=0 IBM=1 LIN=0
     #disable the deprecated warnings that make writing standards-compliant code impossible
     QMAKE_CXXFLAGS += -wd4996
-    QMAKE_CXXFLAGS_DEBUG =  -Zi -MTd
+    QMAKE_CXXFLAGS_DEBUG = -Zi -MTd
     QMAKE_CXXFLAGS_RELEASE = -MT
     DEFINES += _USE_MATH_DEFINES NOMINMAX WIN32_LEAN_AND_MEAN GLEW_STATIC=1
 }

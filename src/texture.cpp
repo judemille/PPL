@@ -29,10 +29,8 @@
 #include <stdexcept>
 #include <cstring>
 #include "texture.h"
-#ifndef BUILD_FOR_STANDALONE
 #include "XPLMUtilities.h"
 #include "XPLMGraphics.h"
-#endif
 
 #if IBM
 #include <Windows.h>
@@ -83,7 +81,7 @@ void SwapEndian(int32_t *){}
 #endif
 
 
-Texture::Texture(const std::string& file_name)
+Texture::Texture(const std::string& file_name, bool build_mipmaps)
 {
     if (file_name.rfind(".bmp") != std::string::npos)
     {
@@ -143,21 +141,12 @@ Texture::Texture(const std::string& file_name)
 
         swapRedBlue();
 
-
-#ifdef BUILD_FOR_STANDALONE
-        glGenTextures(1, (GLuint*)&m_id);
-        glBindTexture(GL_TEXTURE_2D, m_id);
-#else
         /// Do the opengl stuff using XPLM functions for a friendly Xplane existence.
         XPLMGenerateTextureNumbers(&m_id, 1);
         XPLMBindTexture2d(m_id, 0);
-#endif
 
-#if APL
-        glGenerateMipmap(GL_TEXTURE_2D);
-#else
-        gluBuild2DMipmaps(GL_TEXTURE_2D, 3, m_imagedata.Width, m_imagedata.Height, GL_RGB, GL_UNSIGNED_BYTE, &m_imagedata.pData[0]);
-#endif
+        GLuint type = GL_RGB;                                        // 24bit bmp only supported for now
+        glTexImage2D(GL_TEXTURE_2D, 0, type, m_imagedata.Width, m_imagedata.Height, 0, type, GL_UNSIGNED_BYTE, &m_imagedata.pData[0]);
 
         glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR);
         glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
@@ -175,12 +164,12 @@ Texture::Texture(const std::string& file_name)
 
         FILE *file = fopen(file_name.c_str(), "rb");        // Open The TGA File
 
-        if(    file==NULL ||                                                        // Does File Even Exist?
+        if(    file==nullptr ||                                                        // Does File Even Exist?
                 fread(TGAcompare,1,sizeof(TGAcompare),file)!=sizeof(TGAcompare) ||  // Are There 12 Bytes To Read?
                 memcmp(TGAheader,TGAcompare,sizeof(TGAheader))!=0                || // Does The Header Match What We Want?
                 fread(header,1,sizeof(header),file)!=sizeof(header))                // If So Read Next 6 Header Bytes
         {
-            if (file == NULL)                               // Did The File Even Exist? *Added Jim Strong*
+            if (file == nullptr)                               // Did The File Even Exist? *Added Jim Strong*
                 throw std::runtime_error("File could not be opened: "+file_name);
             else                                            // Otherwise
             {
@@ -227,14 +216,10 @@ Texture::Texture(const std::string& file_name)
         {
             type=GL_RGB;                                        // If So Set The 'type' To GL_RGB
         }
-#ifdef BUILD_FOR_STANDALONE
-        glGenTextures(1, (GLuint*)&m_id);
-        glBindTexture(GL_TEXTURE_2D, m_id);
-#else
         /// Do the opengl stuff using XPLM functions for a friendly Xplane existence.
         XPLMGenerateTextureNumbers(&m_id, 1);
         XPLMBindTexture2d(m_id, 0);
-#endif
+
         glTexImage2D(GL_TEXTURE_2D, 0, type, m_imagedata.Width, m_imagedata.Height, 0, type, GL_UNSIGNED_BYTE, &m_imagedata.pData[0]);
 
         glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR);
@@ -243,6 +228,14 @@ Texture::Texture(const std::string& file_name)
     else
     {
         throw std::runtime_error("The texture file is neither a BMP nor a TGA. Other fileformats are not supported.");
+    }
+    if (build_mipmaps)
+    {
+#if APL
+        glGenerateMipmap(GL_TEXTURE_2D);
+#else
+        gluBuild2DMipmaps(GL_TEXTURE_2D, GL_ALPHA, m_imagedata.Width, m_imagedata.Height, GL_ALPHA, GL_UNSIGNED_BYTE, &m_imagedata.pData[0]);
+#endif
     }
 }
 
